@@ -1,0 +1,192 @@
+import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { User } from 'firebase/auth';
+import { ShoppingCart, LogIn, LogOut, Menu, X, LayoutDashboard } from 'lucide-react';
+import { signInWithGoogle, logout } from '../lib/firebase';
+
+interface NavbarProps {
+  user: User | null;
+  cartCount: number;
+  onOpenCart: () => void;
+  onAdminClick: () => void;
+}
+
+export default function Navbar({ user, cartCount, onOpenCart, onAdminClick }: NavbarProps) {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const isAdmin = user?.email?.toLowerCase() === 'asifsafwan43@gmail.com';
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navLinks = [
+    { name: 'Home', href: '#' },
+    { name: 'About', href: '#about' },
+    { name: 'Menu', href: '#menu' },
+    { name: 'Reviews', href: '#reviews' },
+    { name: 'Contact', href: '#contact' },
+  ];
+
+  return (
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-midnight/90 backdrop-blur-md border-b border-white/10 py-3' : 'bg-transparent py-5'}`}>
+      <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between min-h-[80px]">
+        {/* Logo */}
+        <a href="#" className="flex items-center gap-2 group">
+          <div className="relative">
+            <img 
+              src="logo.png" 
+              alt="Cafe Midnight" 
+              className="h-16 md:h-24 transition-transform duration-500 group-hover:scale-105 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]" 
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+            <div className="hidden flex items-center gap-2">
+              <div className="w-10 h-10 bg-gold rounded-full flex items-center justify-center">
+                <span className="text-midnight font-black text-2xl">M</span>
+              </div>
+              <span className="text-2xl md:text-3xl font-serif font-bold text-white tracking-tight">
+                Cafe<span className="text-gold">Midnight</span>
+              </span>
+            </div>
+          </div>
+        </a>
+
+        {/* Desktop Nav */}
+        <div className="hidden lg:flex items-center gap-8">
+          {navLinks.map((link) => (
+            <a 
+              key={link.name} 
+              href={link.href} 
+              className="relative text-white/80 hover:text-gold font-medium transition-colors group"
+            >
+              {link.name}
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gold transition-all duration-300 group-hover:w-full" />
+            </a>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-3">
+             <button 
+              onClick={onOpenCart}
+              className="relative p-2 text-white hover:text-gold transition-colors"
+            >
+              <ShoppingCart size={24} />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-gold text-midnight text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </button>
+
+            {user ? (
+              <div className="flex items-center gap-3 bg-white/5 p-1 pr-2 md:pr-4 rounded-full border border-white/10">
+                <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} alt="" className="w-8 h-8 rounded-full" referrerPolicy="no-referrer" />
+                {isAdmin && (
+                  <button 
+                    onClick={onAdminClick}
+                    className="hidden md:flex items-center gap-2 px-3 py-1 bg-amber-500/10 text-amber-500 rounded-full text-xs font-bold hover:bg-amber-500/20 transition-colors"
+                  >
+                    ADMIN
+                  </button>
+                )}
+                <button onClick={logout} className="text-white/60 hover:text-white transition-colors">
+                  <LogOut size={20} />
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={signInWithGoogle}
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all"
+              >
+                <LogIn size={20} />
+                <span className="hidden md:inline font-medium">Login</span>
+              </button>
+            )}
+
+            <a 
+              href="#reservation" 
+              className="btn-primary py-2 px-5 text-sm"
+            >
+              Reserve Table
+            </a>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="lg:hidden text-white" 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Nav */}
+      {isMenuOpen && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="lg:hidden absolute top-full left-0 w-full bg-midnight border-b border-white/10 p-6 flex flex-col gap-6"
+        >
+          {navLinks.map((link) => (
+            <a 
+              key={link.name} 
+              href={link.href} 
+              onClick={() => setIsMenuOpen(false)}
+              className="text-2xl font-serif text-white/80 hover:text-gold"
+            >
+              {link.name}
+            </a>
+          ))}
+          <div className="flex flex-col gap-4 pt-4 border-t border-white/10">
+            <button 
+              onClick={() => { onOpenCart(); setIsMenuOpen(false); }}
+              className="flex items-center gap-3 text-xl"
+            >
+              <ShoppingCart size={24} /> Cart ({cartCount})
+            </button>
+            {!user ? (
+               <button 
+                onClick={() => { signInWithGoogle(); setIsMenuOpen(false); }}
+                className="flex items-center gap-3 text-xl text-gold"
+              >
+                <LogIn size={24} /> Login
+              </button>
+            ) : (
+              <button 
+                onClick={() => { logout(); setIsMenuOpen(false); }}
+                className="flex items-center gap-3 text-xl text-red-400"
+              >
+                <LogOut size={24} /> Logout
+              </button>
+            )}
+            {isAdmin && (
+              <button 
+                onClick={() => { onAdminClick(); setIsMenuOpen(false); }}
+                className="flex items-center gap-3 text-xl text-amber-500"
+              >
+                <LayoutDashboard size={24} /> Admin Portal
+              </button>
+            )}
+            <a 
+              href="#reservation" 
+              onClick={() => setIsMenuOpen(false)}
+              className="btn-primary w-full text-center"
+            >
+              Reserve Table
+            </a>
+          </div>
+        </motion.div>
+      )}
+    </nav>
+  );
+}

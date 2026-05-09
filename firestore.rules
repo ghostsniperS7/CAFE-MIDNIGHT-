@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isAdmin() { 
+      return isSignedIn() && 
+             (request.auth.token.email == 'asifsafwan43@gmail.com' || 
+              request.auth.token.email.lower() == 'asifsafwan43@gmail.com'.lower()); 
+    }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // --- Validations ---
+    function isValidReservation(data) {
+      return data.fullName is string && data.fullName.size() <= 100 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.guests is number && data.guests > 0 &&
+             data.date is string &&
+             data.time is string &&
+             data.userId is string &&
+             (data.get('status', 'pending') in ['pending', 'confirmed', 'cancelled']) &&
+             (request.method == 'create' ? data.createdAt == request.time : true);
+    }
+
+    // --- Collection Rules ---
+
+    match /_test_connection_/{docId} {
+      allow read: if true;
+    }
+
+    match /reservations/{reservationId} {
+      allow create: if isSignedIn() && (isAdmin() || (incoming().userId == request.auth.uid && isValidReservation(incoming())));
+      allow update: if isSignedIn() && (isAdmin() || (existing().userId == request.auth.uid && isValidReservation(incoming())));
+      allow read, delete: if isSignedIn() && (isAdmin() || existing().userId == request.auth.uid);
+    }
+
+    match /orders/{orderId} {
+      allow create: if isSignedIn() && (isAdmin() || request.resource.data.userId == request.auth.uid);
+      allow read, update, delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && (isAdmin() || request.auth.uid == userId);
+      allow write: if isSignedIn() && (isAdmin() || request.auth.uid == userId);
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() && (isAdmin() || request.resource.data.userId == request.auth.uid);
+      allow update, delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+  }
+}
