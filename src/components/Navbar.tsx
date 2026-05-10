@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { User } from 'firebase/auth';
-import { ShoppingCart, LogIn, LogOut, Menu, X, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, LogIn, LogOut, Menu, X, LayoutDashboard, ShoppingBag } from 'lucide-react';
 import { signInWithGoogle, logout } from '../lib/firebase';
 
 interface NavbarProps {
   user: User | null;
   cartCount: number;
   onOpenCart: () => void;
+  onOrdersClick: () => void;
   onAdminClick: () => void;
 }
 
-export default function Navbar({ user, cartCount, onOpenCart, onAdminClick }: NavbarProps) {
+export default function Navbar({ user, cartCount, onOpenCart, onOrdersClick, onAdminClick }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const isAdmin = user?.email?.toLowerCase() === 'asifsafwan43@gmail.com';
+  const isAdmin = user?.email?.toLowerCase() === 'asifsafwan43@gmail.com' || user?.uid === 'ko89RmZBBiOkZFqhYbQWlEu1LEC2';
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -90,6 +91,12 @@ export default function Navbar({ user, cartCount, onOpenCart, onAdminClick }: Na
             {user ? (
               <div className="flex items-center gap-3 bg-white/5 p-1 pr-2 md:pr-4 rounded-full border border-white/10">
                 <img src={user.photoURL || `https://ui-avatars.com/api/?name=${user.email}`} alt="" className="w-8 h-8 rounded-full" referrerPolicy="no-referrer" />
+                <button 
+                  onClick={onOrdersClick}
+                  className="hidden md:flex items-center gap-2 px-3 py-1 bg-gold/10 text-gold rounded-full text-xs font-bold hover:bg-gold/20 transition-colors"
+                >
+                  MY ORDERS
+                </button>
                 {isAdmin && (
                   <button 
                     onClick={onAdminClick}
@@ -162,12 +169,20 @@ export default function Navbar({ user, cartCount, onOpenCart, onAdminClick }: Na
                 <LogIn size={24} /> Login
               </button>
             ) : (
-              <button 
-                onClick={() => { logout(); setIsMenuOpen(false); }}
-                className="flex items-center gap-3 text-xl text-red-400"
-              >
-                <LogOut size={24} /> Logout
-              </button>
+              <>
+                <button 
+                  onClick={() => { onOrdersClick(); setIsMenuOpen(false); }}
+                  className="flex items-center gap-3 text-xl text-gold"
+                >
+                  <ShoppingBag size={24} /> My Orders
+                </button>
+                <button 
+                  onClick={() => { logout(); setIsMenuOpen(false); }}
+                  className="flex items-center gap-3 text-xl text-red-400"
+                >
+                  <LogOut size={24} /> Logout
+                </button>
+              </>
             )}
             {isAdmin && (
               <button 

@@ -41,6 +41,7 @@ import Footer from './components/Footer';
 import FoodModal from './components/FoodModal';
 import CheckoutModal from './components/CheckoutModal';
 import AdminPortal from './components/AdminPortal';
+import OrdersPortal from './components/OrdersPortal';
 import { signInWithEmail } from './lib/firebase';
 
 export default function App() {
@@ -48,6 +49,7 @@ export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedFood, setSelectedFood] = useState<MenuItem | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isOrdersPortalOpen, setIsOrdersPortalOpen] = useState(false);
   const [isAdminPortalOpen, setIsAdminPortalOpen] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All Items');
@@ -107,12 +109,15 @@ export default function App() {
         user={user} 
         cartCount={cart.length} 
         onOpenCart={() => setIsCartOpen(true)} 
+        onOrdersClick={() => setIsOrdersPortalOpen(true)}
         onAdminClick={() => setIsAdminPortalOpen(true)}
       />
       
       <main>
         {isAdminPortalOpen ? (
           <AdminPortal user={user} onClose={() => setIsAdminPortalOpen(false)} />
+        ) : isOrdersPortalOpen ? (
+          <OrdersPortal user={user} onClose={() => setIsOrdersPortalOpen(false)} />
         ) : (
           <>
             <Hero />
