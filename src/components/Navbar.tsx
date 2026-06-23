@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { User } from 'firebase/auth';
 import { ShoppingCart, LogIn, LogOut, Menu, X, LayoutDashboard, ShoppingBag } from 'lucide-react';
 import { signInWithGoogle, logout } from '../lib/firebase';
@@ -33,7 +33,7 @@ export default function Navbar({ user, cartCount, onOpenCart, onOrdersClick, onA
   ];
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-midnight/90 backdrop-blur-md border-b border-white/10 py-3' : 'bg-transparent py-5'}`}>
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled || isMenuOpen ? 'bg-midnight/95 backdrop-blur-md border-b border-white/10 py-3' : 'bg-transparent py-5'}`}>
       <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center justify-between min-h-[80px]">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2 group">
@@ -128,80 +128,93 @@ export default function Navbar({ user, cartCount, onOpenCart, onOrdersClick, onA
           </div>
 
           {/* Mobile Menu Toggle */}
-          <button 
-            className="lg:hidden text-white" 
+          <motion.button 
+            whileTap={{ scale: 0.9 }}
+            className="lg:hidden text-white p-3 -mr-3 rounded-xl hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]" 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle Menu"
           >
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
+            {isMenuOpen ? <X size={28} className="text-gold" /> : <Menu size={28} />}
+          </motion.button>
         </div>
       </div>
 
       {/* Mobile Nav */}
-      {isMenuOpen && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="lg:hidden absolute top-full left-0 w-full bg-midnight border-b border-white/10 p-6 flex flex-col gap-6"
-        >
-          {navLinks.map((link) => (
-            <a 
-              key={link.name} 
-              href={link.href} 
-              onClick={() => setIsMenuOpen(false)}
-              className="text-2xl font-serif text-white/80 hover:text-gold"
-            >
-              {link.name}
-            </a>
-          ))}
-          <div className="flex flex-col gap-4 pt-4 border-t border-white/10">
-            <button 
-              onClick={() => { onOpenCart(); setIsMenuOpen(false); }}
-              className="flex items-center gap-3 text-xl"
-            >
-              <ShoppingCart size={24} /> Cart ({cartCount})
-            </button>
-            {!user ? (
-               <button 
-                onClick={() => { signInWithGoogle(); setIsMenuOpen(false); }}
-                className="flex items-center gap-3 text-xl text-gold"
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="lg:hidden absolute top-full left-0 w-full bg-midnight/95 backdrop-blur-md border-b border-white/10 p-6 flex flex-col gap-5 max-h-[calc(100vh-80px)] overflow-y-auto"
+          >
+            {navLinks.map((link) => (
+              <motion.a 
+                key={link.name} 
+                href={link.href} 
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsMenuOpen(false)}
+                className="py-2.5 block text-2xl font-serif text-white/95 hover:text-gold active:text-gold/80 transition-colors border-b border-white/5"
               >
-                <LogIn size={24} /> Login
-              </button>
-            ) : (
-              <>
-                <button 
-                  onClick={() => { onOrdersClick(); setIsMenuOpen(false); }}
-                  className="flex items-center gap-3 text-xl text-gold"
-                >
-                  <ShoppingBag size={24} /> My Orders
-                </button>
-                <button 
-                  onClick={() => { logout(); setIsMenuOpen(false); }}
-                  className="flex items-center gap-3 text-xl text-red-400"
-                >
-                  <LogOut size={24} /> Logout
-                </button>
-              </>
-            )}
-            {isAdmin && (
-              <button 
-                onClick={() => { onAdminClick(); setIsMenuOpen(false); }}
-                className="flex items-center gap-3 text-xl text-amber-500"
+                {link.name}
+              </motion.a>
+            ))}
+            <div className="flex flex-col gap-4 pt-4 border-t border-white/10">
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                onClick={() => { onOpenCart(); setIsMenuOpen(false); }}
+                className="flex items-center gap-3 text-xl py-2 w-full text-left text-white/90 active:text-gold transition-colors"
               >
-                <LayoutDashboard size={24} /> Admin Portal
-              </button>
-            )}
-            <a 
-              href="#reservation" 
-              onClick={() => setIsMenuOpen(false)}
-              className="btn-primary w-full text-center"
-            >
-              Reserve Table
-            </a>
-          </div>
-        </motion.div>
-      )}
+                <ShoppingCart size={24} className="text-gold" /> Cart ({cartCount})
+              </motion.button>
+              {!user ? (
+                 <motion.button 
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { signInWithGoogle(); setIsMenuOpen(false); }}
+                  className="flex items-center gap-3 text-xl py-2 w-full text-left text-gold active:text-gold/80 transition-colors"
+                >
+                  <LogIn size={24} /> Login
+                 </motion.button>
+              ) : (
+                <>
+                  <motion.button 
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => { onOrdersClick(); setIsMenuOpen(false); }}
+                    className="flex items-center gap-3 text-xl py-2 w-full text-left text-gold active:text-gold/80 transition-colors"
+                  >
+                    <ShoppingBag size={24} /> My Orders
+                  </motion.button>
+                  <motion.button 
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => { logout(); setIsMenuOpen(false); }}
+                    className="flex items-center gap-3 text-xl py-2 w-full text-left text-red-400 active:text-red-500 transition-colors"
+                  >
+                    <LogOut size={24} /> Logout
+                  </motion.button>
+                </>
+              )}
+              {isAdmin && (
+                <motion.button 
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { onAdminClick(); setIsMenuOpen(false); }}
+                  className="flex items-center gap-3 text-xl py-2 w-full text-left text-amber-500 active:text-amber-600 transition-colors"
+                >
+                  <LayoutDashboard size={24} /> Admin Portal
+                </motion.button>
+              )}
+              <motion.a 
+                whileTap={{ scale: 0.95 }}
+                href="#reservation" 
+                onClick={() => setIsMenuOpen(false)}
+                className="btn-primary w-full text-center py-4 text-base mt-2"
+              >
+                Reserve Table
+              </motion.a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }
