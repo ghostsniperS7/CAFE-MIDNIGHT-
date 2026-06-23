@@ -55,6 +55,7 @@ export default function AdminPortal({ user, onClose }: AdminPortalProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
+  const [activeStatusDropdownId, setActiveStatusDropdownId] = useState<string | null>(null);
   const [errorVisible, setErrorVisible] = useState<string | null>(null);
   
   // Form State
@@ -75,6 +76,12 @@ export default function AdminPortal({ user, onClose }: AdminPortalProps) {
       return () => clearTimeout(timer);
     }
   }, [errorVisible]);
+
+  useEffect(() => {
+    const handleGlobalClick = () => setActiveStatusDropdownId(null);
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
 
   useEffect(() => {
     if (!user || (user.email?.toLowerCase() !== 'asifsafwan43@gmail.com' && user.uid !== 'ko89RmZBBiOkZFqhYbQWlEu1LEC2')) return;
@@ -436,23 +443,34 @@ export default function AdminPortal({ user, onClose }: AdminPortalProps) {
                       <div className="flex flex-col md:flex-row justify-between gap-6 mb-6">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2 flex-wrap">
-                            <div className="relative group/status">
-                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer ${
-                                order.status === 'delivered' ? 'bg-green-500/10 text-green-500' : 
-                                order.status === 'cancelled' ? 'bg-red-500/10 text-red-500' : 
-                                order.status === 'confirmed' ? 'bg-blue-500/10 text-blue-500' :
-                                order.status === 'delivering' ? 'bg-purple-500/10 text-purple-500' :
-                                'bg-amber-500/10 text-amber-500'
-                              }`}>
+                            <div className="relative">
+                              <span 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveStatusDropdownId(activeStatusDropdownId === order.id ? null : order.id!);
+                                }}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest cursor-pointer transition-all ${
+                                  order.status === 'delivered' ? 'bg-green-500/10 text-green-500' : 
+                                  order.status === 'cancelled' ? 'bg-red-500/10 text-red-500' : 
+                                  order.status === 'confirmed' ? 'bg-blue-500/10 text-blue-500' :
+                                  order.status === 'delivering' ? 'bg-purple-500/10 text-purple-500' :
+                                  'bg-amber-500/10 text-amber-500'
+                                }`}
+                              >
                                 {order.status === 'delivering' ? <Truck size={10} /> : <Package size={10} />}
                                 {order.status}
-                                <ChevronDown size={10} className="ml-0.5 group-hover/status:rotate-180 transition-transform" />
+                                <ChevronDown size={10} className={`ml-0.5 transition-transform ${activeStatusDropdownId === order.id ? 'rotate-180' : ''}`} />
                               </span>
-                              <div className="absolute top-full left-0 mt-2 bg-midnight border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover/status:opacity-100 group-hover/status:visible transition-all z-50 p-2 min-w-[140px]">
+                              <div className={`absolute top-full left-0 mt-2 bg-midnight border border-white/10 rounded-xl shadow-2xl transition-all z-50 p-2 min-w-[140px] ${
+                                activeStatusDropdownId === order.id ? 'opacity-100 visible' : 'opacity-0 invisible'
+                              }`}>
                                 {['pending', 'confirmed', 'delivering', 'delivered', 'cancelled'].map(s => (
                                   <button
                                     key={s}
-                                    onClick={() => handleOrderUpdate(order.id!, s as any)}
+                                    onClick={() => {
+                                      handleOrderUpdate(order.id!, s as any);
+                                      setActiveStatusDropdownId(null);
+                                    }}
                                     className={`w-full text-left px-3 py-2 rounded-lg text-[10px] font-bold uppercase hover:bg-white/5 transition-colors ${order.status === s ? 'text-amber-500' : 'text-gray-400'}`}
                                   >
                                     {s}
